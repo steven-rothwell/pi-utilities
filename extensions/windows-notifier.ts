@@ -84,21 +84,31 @@ function saveConfig(config: NotifierConfig): void {
 function notifyWindows(title: string, body: string, sound: string): void {
   const { execFile } = require("child_process");
 
-  // Play sound if configured (sound value is now a direct file path)
-  if (sound) {
-    const playSound = [
-      "Add-Type -AssemblyName System.Windows.Forms",
-      `[System.Media.SoundPlayer]::new('${sound}').Play()`,
-    ].join("; ");
-    execFile("powershell.exe", ["-NoProfile", "-Command", playSound], () => {});
-  }
+  // Map sounds to balloon tip icons (each plays a different native Windows sound)
+  const soundToIcon: Record<string, string> = {
+    "": "None",
+    "C:\\Windows\\Media\\Windows Default.wav": "Info",
+    "C:\\Windows\\Media\\Windows Notify System Generic.wav": "Info",
+    "C:\\Windows\\Media\\Windows Notify Messaging.wav": "Info",
+    "C:\\Windows\\Media\\Windows Notify Email.wav": "Info",
+    "C:\\Windows\\Media\\Windows Notify Calendar.wav": "Info",
+    "C:\\Windows\\Media\\Windows Notify.wav": "Info",
+    "C:\\Windows\\Media\\Windows Ding.wav": "Info",
+    "C:\\Windows\\Media\\Windows Exclamation.wav": "Warning",
+    "C:\\Windows\\Media\\Windows Background.wav": "Info",
+    "C:\\Windows\\Media\\Windows Balloon.wav": "Info",
+    "C:\\Windows\\Media\\Windows Error.wav": "Error",
+    "C:\\Windows\\Media\\Windows Ringin.wav": "Info",
+  };
 
-  // Show balloon notification
+  const tipIcon = soundToIcon[sound] ?? "Info";
+
+  // Show balloon notification with appropriate icon (plays native sound)
   const psScript = [
     "Add-Type -AssemblyName System.Windows.Forms",
     "$balloon = New-Object System.Windows.Forms.NotifyIcon",
     "$balloon.Icon = [System.Drawing.SystemIcons]::Information",
-    "$balloon.BalloonTipIcon = 'Info'",
+    `$balloon.BalloonTipIcon = '${tipIcon}'`,
     `$balloon.BalloonTipTitle = '${escapePs(title)}'`,
     `$balloon.BalloonTipText = '${escapePs(body)}'`,
     "$balloon.Visible = $true",
