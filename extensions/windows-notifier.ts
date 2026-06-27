@@ -2,6 +2,7 @@
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
+import { homedir } from "node:os";
 
 type NotificationType = "agentFinished" | "providerError" | "toolError";
 
@@ -46,12 +47,12 @@ const AVAILABLE_SOUNDS = [
   { value: "ms-winsoundevent:Notification.Looping.SMS", label: "Looping SMS" },
 ];
 
-function getConfigPath(cwd: string): string {
-  return join(cwd, CONFIG_DIR_NAME, CONFIG_FILE);
+function getConfigPath(): string {
+  return join(homedir(), ".pi", CONFIG_FILE);
 }
 
-function loadConfig(cwd: string): NotifierConfig {
-  const configPath = getConfigPath(cwd);
+function loadConfig(): NotifierConfig {
+  const configPath = getConfigPath();
   if (!existsSync(configPath)) {
     return DEFAULT_CONFIG;
   }
@@ -69,8 +70,8 @@ function loadConfig(cwd: string): NotifierConfig {
   }
 }
 
-function saveConfig(cwd: string, config: NotifierConfig): void {
-  const configPath = getConfigPath(cwd);
+function saveConfig(config: NotifierConfig): void {
+  const configPath = getConfigPath();
   writeFileSync(configPath, JSON.stringify(config, null, 2), "utf-8");
 }
 
@@ -99,8 +100,8 @@ function escapePs(text: string): string {
 export default function (pi: ExtensionAPI) {
   let config: NotifierConfig = DEFAULT_CONFIG;
 
-  pi.on("session_start", async (_event, ctx) => {
-    config = loadConfig(ctx.cwd);
+  pi.on("session_start", async () => {
+    config = loadConfig();
   });
 
   // Agent finished - waiting for user input
@@ -163,7 +164,7 @@ export default function (pi: ExtensionAPI) {
         const current = config.notifications[notifType];
         const newState = !current.enabled;
         config.notifications[notifType].enabled = newState;
-        saveConfig(ctx.cwd, config);
+        saveConfig(config);
         ctx.ui.notify(`${notifTypeLabel} notifications ${newState ? "enabled" : "disabled"}`, "info");
       }
 
@@ -191,7 +192,7 @@ export default function (pi: ExtensionAPI) {
         notifyWindows("Preview", "This is how the notification sounds", soundValue);
 
         config.notifications[notifType].sound = soundValue;
-        saveConfig(ctx.cwd, config);
+        saveConfig(config);
         ctx.ui.notify(`Sound updated for ${notifTypeLabel}`, "info");
       }
 
