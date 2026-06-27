@@ -22,30 +22,33 @@ const DEFAULT_CONFIG: NotifierConfig = {
   notifications: {
     agentFinished: {
       enabled: true,
-      sound: "ms-winsoundevent:Notification.IM",
+      sound: "C:\\Windows\\Media\\Windows Notify Messaging.wav",
     },
     providerError: {
       enabled: true,
-      sound: "ms-winsoundevent:Notification.Looping.Alarm",
+      sound: "C:\\Windows\\Media\\Windows Error.wav",
     },
     toolError: {
       enabled: true,
-      sound: "ms-winsoundevent:Notification.Looping.Alarm2",
+      sound: "C:\\Windows\\Media\\Windows Exclamation.wav",
     },
   },
 };
 
 const AVAILABLE_SOUNDS = [
   { value: "", label: "No sound" },
-  { value: "ms-winsoundevent:Notification.Default", label: "Default" },
-  { value: "ms-winsoundevent:Notification.IM", label: "IM" },
-  { value: "ms-winsoundevent:Notification.Mail", label: "Mail" },
-  { value: "ms-winsoundevent:Notification.Reminder", label: "Reminder" },
-  { value: "ms-winsoundevent:Notification.SMS", label: "SMS" },
-  { value: "ms-winsoundevent:Notification.Looping.Alarm", label: "Looping Alarm" },
-  { value: "ms-winsoundevent:Notification.Looping.Alarm2", label: "Looping Alarm 2" },
-  { value: "ms-winsoundevent:Notification.Looping.Call", label: "Looping Call" },
-  { value: "ms-winsoundevent:Notification.Looping.SMS", label: "Looping SMS" },
+  { value: "C:\\Windows\\Media\\Windows Default.wav", label: "Default" },
+  { value: "C:\\Windows\\Media\\Windows Notify System Generic.wav", label: "Notify Generic" },
+  { value: "C:\\Windows\\Media\\Windows Notify Messaging.wav", label: "Notify Messaging" },
+  { value: "C:\\Windows\\Media\\Windows Notify Email.wav", label: "Notify Email" },
+  { value: "C:\\Windows\\Media\\Windows Notify Calendar.wav", label: "Notify Calendar" },
+  { value: "C:\\Windows\\Media\\Windows Notify.wav", label: "Notify" },
+  { value: "C:\\Windows\\Media\\Windows Ding.wav", label: "Ding" },
+  { value: "C:\\Windows\\Media\\Windows Exclamation.wav", label: "Exclamation" },
+  { value: "C:\\Windows\\Media\\Windows Background.wav", label: "Background" },
+  { value: "C:\\Windows\\Media\\Windows Balloon.wav", label: "Balloon" },
+  { value: "C:\\Windows\\Media\\Windows Error.wav", label: "Error" },
+  { value: "C:\\Windows\\Media\\Windows Ringin.wav", label: "Ringin" },
 ];
 
 function getConfigPath(): string {
@@ -76,29 +79,16 @@ function saveConfig(config: NotifierConfig): void {
   writeFileSync(configPath, JSON.stringify(config, null, 2), "utf-8");
 }
 
-// Map toast sound URIs to Windows system sound files
-const SOUND_FILE_MAP: Record<string, string> = {
-  "": "",
-  "ms-winsoundevent:Notification.Default": "C:\\Windows\\Media\\Windows Notify System Generic.wav",
-  "ms-winsoundevent:Notification.IM": "C:\\Windows\\Media\\Windows Notify Messaging.wav",
-  "ms-winsoundevent:Notification.Mail": "C:\\Windows\\Media\\Windows Notify Email.wav",
-  "ms-winsoundevent:Notification.Reminder": "C:\\Windows\\Media\\Windows Notify Calendar.wav",
-  "ms-winsoundevent:Notification.SMS": "C:\\Windows\\Media\\Windows Notify Messaging.wav",
-  "ms-winsoundevent:Notification.Looping.Alarm": "C:\\Windows\\Media\\Windows Background.wav",
-  "ms-winsoundevent:Notification.Looping.Alarm2": "C:\\Windows\\Media\\Windows Notify Alarm.wav",
-  "ms-winsoundevent:Notification.Looping.Call": "C:\\Windows\\Media\\Ring10.wav",
-  "ms-winsoundevent:Notification.Looping.SMS": "C:\\Windows\\Media\\Windows Notify Messaging.wav",
-};
+// Sound values are now direct file paths to Windows system sounds
 
 function notifyWindows(title: string, body: string, sound: string): void {
   const { execFile } = require("child_process");
 
-  // Play sound if configured
-  const soundFile = SOUND_FILE_MAP[sound];
-  if (soundFile) {
+  // Play sound if configured (sound value is now a direct file path)
+  if (sound) {
     const playSound = [
       "Add-Type -AssemblyName System.Windows.Forms",
-      `[System.Media.SoundPlayer]::new('${soundFile}').Play()`,
+      `[System.Media.SoundPlayer]::new('${sound}').Play()`,
     ].join("; ");
     execFile("powershell.exe", ["-NoProfile", "-Command", playSound], () => {});
   }
