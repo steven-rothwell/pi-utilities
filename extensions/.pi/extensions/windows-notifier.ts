@@ -132,4 +132,82 @@ export default function (pi: ExtensionAPI) {
       );
     }
   });
+
+  pi.registerCommand("notifier", {
+    description: "Configure Windows notification settings",
+    handler: async (_args, ctx) => {
+      const action = await ctx.ui.select("Notification Settings:", [
+        { value: "toggle", label: "Toggle notifications on/off" },
+        { value: "sound", label: "Change notification sounds" },
+        { value: "test", label: "Test notification" },
+      ]);
+
+      if (!action) return;
+
+      if (action === "toggle") {
+        const notifType = await ctx.ui.select("Which notification:", [
+          { value: "agentFinished", label: "Agent Finished" },
+          { value: "providerError", label: "Provider Error" },
+          { value: "toolError", label: "Tool Error" },
+        ]);
+
+        if (!notifType) return;
+
+        const current = config.notifications[notifType as NotificationType];
+        const newState = !current.enabled;
+        config.notifications[notifType as NotificationType].enabled = newState;
+        saveConfig(ctx.cwd, config);
+        ctx.ui.notify(`${notifType} notifications ${newState ? "enabled" : "disabled"}`, "info");
+      }
+
+      if (action === "sound") {
+        const notifType = await ctx.ui.select("Which notification:", [
+          { value: "agentFinished", label: "Agent Finished" },
+          { value: "providerError", label: "Provider Error" },
+          { value: "toolError", label: "Tool Error" },
+        ]);
+
+        if (!notifType) return;
+
+        const soundChoice = await ctx.ui.select(
+          "Select sound (plays preview):",
+          AVAILABLE_SOUNDS.map((s) => ({ value: s.value, label: s.label }))
+        );
+
+        if (!soundChoice) return;
+
+        // Play preview
+        notifyWindows("Preview", "This is how the notification sounds", soundChoice);
+
+        config.notifications[notifType as NotificationType].sound = soundChoice;
+        saveConfig(ctx.cwd, config);
+        ctx.ui.notify(`Sound updated for ${notifType}`, "info");
+      }
+
+      if (action === "test") {
+        const notifType = await ctx.ui.select("Test which notification:", [
+          { value: "agentFinished", label: "Agent Finished" },
+          { value: "providerError", label: "Provider Error" },
+          { value: "toolError", label: "Tool Error" },
+        ]);
+
+        if (!notifType) return;
+
+        const cfg = config.notifications[notifType as NotificationType];
+        const titles: Record<string, string> = {
+          agentFinished: "Pi",
+          providerError: "Pi Error",
+          toolError: "Pi Tool Error",
+        };
+        const bodies: Record<string, string> = {
+          agentFinished: "Ready for input",
+          providerError: "API request failed (HTTP 429)",
+          toolError: "Tool 'bash' failed",
+        };
+
+        notifyWindows(titles[notifType], bodies[notifType], cfg.sound);
+        ctx.ui.notify("Test notification sent", "info");
+      }
+    },
+  });
 }
