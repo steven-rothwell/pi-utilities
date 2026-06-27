@@ -74,6 +74,28 @@ function saveConfig(cwd: string, config: NotifierConfig): void {
   writeFileSync(configPath, JSON.stringify(config, null, 2), "utf-8");
 }
 
+function notifyWindows(title: string, body: string, sound: string): void {
+  const { execFile } = require("child_process");
+
+  // PowerShell command to show toast
+  const psScript = [
+    "$type = 'Windows.UI.Notifications'",
+    "$mgr = [ToastNotificationManager, $type, ContentType = WindowsRuntime]",
+    "$template = [ToastTemplateType]::ToastText02",
+    "$xml = [ToastNotificationManager]::GetTemplateContent($template)",
+    "$xml.GetElementsByTagName('text')[0].AppendChild($xml.CreateTextNode('" + escapePs(title) + "')) > $null",
+    "$xml.GetElementsByTagName('text')[1].AppendChild($xml.CreateTextNode('" + escapePs(body) + "')) > $null",
+    "$toast = [ToastNotification]::new($xml)",
+    "[ToastNotificationManager]::CreateToastNotifier('Pi').Show($toast)",
+  ].join("; ");
+
+  execFile("powershell.exe", ["-NoProfile", "-Command", psScript], () => {});
+}
+
+function escapePs(text: string): string {
+  return text.replace(/'/g, "''");
+}
+
 export default function (pi: ExtensionAPI) {
   let config: NotifierConfig = DEFAULT_CONFIG;
 
