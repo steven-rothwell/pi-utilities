@@ -36,6 +36,7 @@ const DEFAULT_CONFIG: NotifierConfig = {
 };
 
 const AVAILABLE_SOUNDS = [
+  { value: "", label: "No sound" },
   { value: "ms-winsoundevent:Notification.Default", label: "Default" },
   { value: "ms-winsoundevent:Notification.IM", label: "IM" },
   { value: "ms-winsoundevent:Notification.Mail", label: "Mail" },
@@ -78,7 +79,11 @@ function saveConfig(config: NotifierConfig): void {
 function notifyWindows(title: string, body: string, sound: string): void {
   const { execFile } = require("child_process");
 
-  // PowerShell command to show toast
+  // PowerShell command to show toast with optional audio
+  const audioLine = sound
+    ? `$xml.CreateElement('audio', 'http://schemas.microsoft.com/windows/2006/08/actions/toast').SetAttribute('src', '${sound}') | ForEach-Object { $xml.DocumentElement.AppendChild($_) } > $null`
+    : `$xml.CreateElement('audio', 'http://schemas.microsoft.com/windows/2006/08/actions/toast').SetAttribute('silent', 'true') | ForEach-Object { $xml.DocumentElement.AppendChild($_) } > $null`;
+
   const psScript = [
     "$type = 'Windows.UI.Notifications'",
     "$mgr = [ToastNotificationManager, $type, ContentType = WindowsRuntime]",
@@ -86,6 +91,7 @@ function notifyWindows(title: string, body: string, sound: string): void {
     "$xml = [ToastNotificationManager]::GetTemplateContent($template)",
     "$xml.GetElementsByTagName('text')[0].AppendChild($xml.CreateTextNode('" + escapePs(title) + "')) > $null",
     "$xml.GetElementsByTagName('text')[1].AppendChild($xml.CreateTextNode('" + escapePs(body) + "')) > $null",
+    audioLine,
     "$toast = [ToastNotification]::new($xml)",
     "[ToastNotificationManager]::CreateToastNotifier('Pi').Show($toast)",
   ].join("; ");
