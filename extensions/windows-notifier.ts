@@ -134,92 +134,119 @@ export default function (pi: ExtensionAPI) {
     }
   });
 
-  const NOTIF_TYPE_LABELS: Record<string, NotificationType> = {
-    "Agent Finished": "agentFinished",
-    "Provider Error": "providerError",
-    "Tool Error": "toolError",
-  };
+  const NOTIF_TYPES: { key: NotificationType; label: string }[] = [
+    { key: "agentFinished", label: "Agent Finished" },
+    { key: "providerError", label: "Provider Error" },
+    { key: "toolError", label: "Tool Error" },
+  ];
+
+  async function showToggleMenu(ctx: any): Promise<void> {
+    while (true) {
+      const items = [
+        ...NOTIF_TYPES.map((t) => ({
+          label: `${config.notifications[t.key].enabled ? "[x]" : "[ ]"} ${t.label}`,
+          value: t.key,
+        })),
+        { label: "← Back", value: "back" },
+      ];
+
+      const choice = await ctx.ui.select("Toggle notifications:", items.map((i) => i.label));
+      if (!choice || choice === "← Back") return;
+
+      const item = items.find((i) => i.label === choice);
+      if (item && item.value !== "back") {
+        const notifType = item.value as NotificationType;
+        config.notifications[notifType].enabled = !config.notifications[notifType].enabled;
+        saveConfig(config);
+      }
+    }
+  }
+
+  async function showSoundMenu(ctx: any): Promise<void> {
+    while (true) {
+      const notifType = await ctx.ui.select("Select notification type:", [
+        ...NOTIF_TYPES.map((t) => t.label),
+        "← Back",
+      ]);
+      if (!notifType || notifType === "← Back") return;
+
+      const selectedType = NOTIF_TYPES.find((t) => t.label === notifType);
+      if (!selectedType) continue;
+
+      while (true) {
+        const currentSound = config.notifications[selectedType.key].sound;
+        const soundItems = [
+          ...AVAILABLE_SOUNDS.map((s) => ({
+            label: `${s.value === currentSound ? "(•)" : "( )"} ${s.label}`,
+            value: s.value,
+          })),
+          { label: "← Back", value: "back" },
+        ];
+
+        const choice = await ctx.ui.select(
+          `${notifType} - Select sound (plays preview):`,
+          soundItems.map((i) => i.label)
+        );
+        if (!choice || choice === "← Back") break;
+
+        const item = soundItems.find((i) => i.label === choice);
+        if (item && item.value !== "back") {
+          notifyWindows("Preview", "This is how the notification sounds", item.value);
+          config.notifications[selectedType.key].sound = item.value;
+          saveConfig(config);
+        }
+      }
+    }
+  }
+
+  async function showTestMenu(ctx: any): Promise<void> {
+    while (true) {
+      const choice = await ctx.ui.select("Test notification:", [
+        ...NOTIF_TYPES.map((t) => t.label),
+        "← Back",
+      ]);
+      if (!choice || choice === "← Back") return;
+
+      const selectedType = NOTIF_TYPES.find((t) => t.label === choice);
+      if (!selectedType) continue;
+
+      const cfg = config.notifications[selectedType.key];
+      const titles: Record<string, string> = {
+        agentFinished: "Pi",
+        providerError: "Pi Error",
+        toolError: "Pi Tool Error",
+      };
+      const bodies: Record<string, string> = {
+        agentFinished: "Ready for input",
+        providerError: "API request failed (HTTP 429)",
+        toolError: "Tool 'bash' failed",
+      };
+
+      notifyWindows(titles[selectedType.key], bodies[selectedType.key], cfg.sound);
+      ctx.ui.notify("Test notification sent", "info");
+    }
+  }
 
   pi.registerCommand("notifier", {
     description: "Configure Windows notification settings",
     handler: async (_args, ctx) => {
-      const action = await ctx.ui.select("Notification Settings:", [
-        "Toggle notifications on/off",
-        "Change notification sounds",
-        "Test notification",
-      ]);
-
-      if (!action) return;
-
-      if (action === "Toggle notifications on/off") {
-        const notifTypeLabel = await ctx.ui.select("Which notification:", [
-          "Agent Finished",
-          "Provider Error",
-          "Tool Error",
+      while (true) {
+        const action = await ctx.ui.select("Notification Settings:", [
+          "Toggle notifications on/off",
+          "Change notification sounds",
+          "Test notification",
+          "← Exit",
         ]);
 
-        if (!notifTypeLabel) return;
-        const notifType = NOTIF_TYPE_LABELS[notifTypeLabel];
+        if (!action || action === "← Exit") return;
 
-        const current = config.notifications[notifType];
-        const newState = !current.enabled;
-        config.notifications[notifType].enabled = newState;
-        saveConfig(config);
-        ctx.ui.notify(`${notifTypeLabel} notifications ${newState ? "enabled" : "disabled"}`, "info");
-      }
-
-      if (action === "Change notification sounds") {
-        const notifTypeLabel = await ctx.ui.select("Which notification:", [
-          "Agent Finished",
-          "Provider Error",
-          "Tool Error",
-        ]);
-
-        if (!notifTypeLabel) return;
-        const notifType = NOTIF_TYPE_LABELS[notifTypeLabel];
-
-        const soundChoice = await ctx.ui.select(
-          "Select sound (plays preview):",
-          AVAILABLE_SOUNDS.map((s) => s.label)
-        );
-
-        if (!soundChoice) return;
-
-        const soundValue = AVAILABLE_SOUNDS.find((s) => s.label === soundChoice)?.value;
-        if (!soundValue) return;
-
-        // Play preview
-        notifyWindows("Preview", "This is how the notification sounds", soundValue);
-
-        config.notifications[notifType].sound = soundValue;
-        saveConfig(config);
-        ctx.ui.notify(`Sound updated for ${notifTypeLabel}`, "info");
-      }
-
-      if (action === "Test notification") {
-        const notifTypeLabel = await ctx.ui.select("Test which notification:", [
-          "Agent Finished",
-          "Provider Error",
-          "Tool Error",
-        ]);
-
-        if (!notifTypeLabel) return;
-        const notifType = NOTIF_TYPE_LABELS[notifTypeLabel];
-
-        const cfg = config.notifications[notifType];
-        const titles: Record<string, string> = {
-          agentFinished: "Pi",
-          providerError: "Pi Error",
-          toolError: "Pi Tool Error",
-        };
-        const bodies: Record<string, string> = {
-          agentFinished: "Ready for input",
-          providerError: "API request failed (HTTP 429)",
-          toolError: "Tool 'bash' failed",
-        };
-
-        notifyWindows(titles[notifType], bodies[notifType], cfg.sound);
-        ctx.ui.notify("Test notification sent", "info");
+        if (action === "Toggle notifications on/off") {
+          await showToggleMenu(ctx);
+        } else if (action === "Change notification sounds") {
+          await showSoundMenu(ctx);
+        } else if (action === "Test notification") {
+          await showTestMenu(ctx);
+        }
       }
     },
   });
