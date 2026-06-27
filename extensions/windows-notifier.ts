@@ -76,24 +76,19 @@ function saveConfig(config: NotifierConfig): void {
   writeFileSync(configPath, JSON.stringify(config, null, 2), "utf-8");
 }
 
-function notifyWindows(title: string, body: string, sound: string): void {
+function notifyWindows(title: string, body: string, _sound: string): void {
   const { execFile } = require("child_process");
 
-  // PowerShell command to show toast with optional audio
-  const audioLine = sound
-    ? `$xml.CreateElement('audio', 'http://schemas.microsoft.com/windows/2006/08/actions/toast').SetAttribute('src', '${sound}') | ForEach-Object { $xml.DocumentElement.AppendChild($_) } > $null`
-    : `$xml.CreateElement('audio', 'http://schemas.microsoft.com/windows/2006/08/actions/toast').SetAttribute('silent', 'true') | ForEach-Object { $xml.DocumentElement.AppendChild($_) } > $null`;
-
+  // Use System.Windows.Forms for balloon notifications (more reliable, no app registration needed)
   const psScript = [
-    "$type = 'Windows.UI.Notifications'",
-    "$mgr = [ToastNotificationManager, $type, ContentType = WindowsRuntime]",
-    "$template = [ToastTemplateType]::ToastText02",
-    "$xml = [ToastNotificationManager]::GetTemplateContent($template)",
-    "$xml.GetElementsByTagName('text')[0].AppendChild($xml.CreateTextNode('" + escapePs(title) + "')) > $null",
-    "$xml.GetElementsByTagName('text')[1].AppendChild($xml.CreateTextNode('" + escapePs(body) + "')) > $null",
-    audioLine,
-    "$toast = [ToastNotification]::new($xml)",
-    "[ToastNotificationManager]::CreateToastNotifier('Pi').Show($toast)",
+    "Add-Type -AssemblyName System.Windows.Forms",
+    "$balloon = New-Object System.Windows.Forms.NotifyIcon",
+    "$balloon.Icon = [System.Drawing.SystemIcons]::Information",
+    "$balloon.BalloonTipIcon = 'Info'",
+    `$balloon.BalloonTipTitle = '${escapePs(title)}'`,
+    `$balloon.BalloonTipText = '${escapePs(body)}'`,
+    "$balloon.Visible = $true",
+    "$balloon.ShowBalloonTip(5000)",
   ].join("; ");
 
   execFile("powershell.exe", ["-NoProfile", "-Command", psScript], () => {});
