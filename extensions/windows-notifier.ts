@@ -76,42 +76,43 @@ function saveConfig(config: NotifierConfig): void {
   writeFileSync(configPath, JSON.stringify(config, null, 2), "utf-8");
 }
 
+// Map toast sound URIs to Windows system sound files
+const SOUND_FILE_MAP: Record<string, string> = {
+  "": "",
+  "ms-winsoundevent:Notification.Default": "C:\\Windows\\Media\\Windows Notify System Generic.wav",
+  "ms-winsoundevent:Notification.IM": "C:\\Windows\\Media\\Windows Notify Messaging.wav",
+  "ms-winsoundevent:Notification.Mail": "C:\\Windows\\Media\\Windows Notify Email.wav",
+  "ms-winsoundevent:Notification.Reminder": "C:\\Windows\\Media\\Windows Notify Calendar.wav",
+  "ms-winsoundevent:Notification.SMS": "C:\\Windows\\Media\\Windows Notify Messaging.wav",
+  "ms-winsoundevent:Notification.Looping.Alarm": "C:\\Windows\\Media\\Windows Background.wav",
+  "ms-winsoundevent:Notification.Looping.Alarm2": "C:\\Windows\\Media\\Windows Notify Alarm.wav",
+  "ms-winsoundevent:Notification.Looping.Call": "C:\\Windows\\Media\\Ring10.wav",
+  "ms-winsoundevent:Notification.Looping.SMS": "C:\\Windows\\Media\\Windows Notify Messaging.wav",
+};
+
 function notifyWindows(title: string, body: string, sound: string): void {
   const { execFile } = require("child_process");
-  const appId = "PiCodingAgent";
 
-  // PowerShell to show toast notification with proper app registration and custom sound
+  // Play sound if configured
+  const soundFile = SOUND_FILE_MAP[sound];
+  if (soundFile) {
+    const playSound = [
+      "Add-Type -AssemblyName System.Windows.Forms",
+      `[System.Media.SoundPlayer]::new('${soundFile}').Play()`,
+    ].join("; ");
+    execFile("powershell.exe", ["-NoProfile", "-Command", playSound], () => {});
+  }
+
+  // Show balloon notification
   const psScript = [
-    // Register app for notifications
-    `$startMenu = [Environment]::GetFolderPath('StartMenu')`,
-    `$shortcutPath = Join-Path $startMenu 'Programs\Pi.lnk'`,
-    `if (!(Test-Path $shortcutPath)) {`,
-    `  $shell = New-Object -ComObject WScript.Shell`,
-    `  $shortcut = $shell.CreateShortcut($shortcutPath)`,
-    `  $shortcut.TargetPath = 'powershell.exe'`,
-    `  $shortcut.Arguments = '-NoExit'`,
-    `  $shortcut.WorkingDirectory = $env:USERPROFILE`,
-    `  $shortcut.AppUserModelID = '${appId}'`,
-    `  $shortcut.Save()`,
-    `}`,
-    // Show toast with sound
-    `$ntfType = 'Windows.UI.Notifications'`,
-    `$mgr = [ToastNotificationManager, $ntfType, ContentType = WindowsRuntime]`,
-    `$toastXml = [$ntfType.ToastTemplateType]::ToastText02`,
-    `$xml = [$ntfType.ToastNotificationManager]::GetTemplateContent($toastXml)`,
-    `$xml.GetElementsByTagName('text')[0].AppendChild($xml.CreateTextNode('${escapePs(title)}')) > $null`,
-    `$xml.GetElementsByTagName('text')[1].AppendChild($xml.CreateTextNode('${escapePs(body)}')) > $null`,
-    ...(sound ? [
-      `$audio = $xml.CreateElement('audio', 'http://schemas.microsoft.com/windows/2006/08/actions/toast')`,
-      `$audio.SetAttribute('src', '${sound}') > $null`,
-      `$xml.DocumentElement.AppendChild($audio) > $null`,
-    ] : [
-      `$audio = $xml.CreateElement('audio', 'http://schemas.microsoft.com/windows/2006/08/actions/toast')`,
-      `$audio.SetAttribute('silent', 'true') > $null`,
-      `$xml.DocumentElement.AppendChild($audio) > $null`,
-    ]),
-    `$toast = [$ntfType.ToastNotification]::new($xml)`,
-    `[ToastNotificationManager]::CreateToastNotifier('${appId}').Show($toast)`,
+    "Add-Type -AssemblyName System.Windows.Forms",
+    "$balloon = New-Object System.Windows.Forms.NotifyIcon",
+    "$balloon.Icon = [System.Drawing.SystemIcons]::Information",
+    "$balloon.BalloonTipIcon = 'Info'",
+    `$balloon.BalloonTipTitle = '${escapePs(title)}'`,
+    `$balloon.BalloonTipText = '${escapePs(body)}'`,
+    "$balloon.Visible = $true",
+    "$balloon.ShowBalloonTip(5000)",
   ].join("; ");
 
   execFile("powershell.exe", ["-NoProfile", "-Command", psScript], () => {});
