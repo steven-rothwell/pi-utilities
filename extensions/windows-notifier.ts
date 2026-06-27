@@ -133,67 +133,79 @@ export default function (pi: ExtensionAPI) {
     }
   });
 
+  const NOTIF_TYPE_LABELS: Record<string, NotificationType> = {
+    "Agent Finished": "agentFinished",
+    "Provider Error": "providerError",
+    "Tool Error": "toolError",
+  };
+
   pi.registerCommand("notifier", {
     description: "Configure Windows notification settings",
     handler: async (_args, ctx) => {
       const action = await ctx.ui.select("Notification Settings:", [
-        { value: "toggle", label: "Toggle notifications on/off" },
-        { value: "sound", label: "Change notification sounds" },
-        { value: "test", label: "Test notification" },
+        "Toggle notifications on/off",
+        "Change notification sounds",
+        "Test notification",
       ]);
 
       if (!action) return;
 
-      if (action === "toggle") {
-        const notifType = await ctx.ui.select("Which notification:", [
-          { value: "agentFinished", label: "Agent Finished" },
-          { value: "providerError", label: "Provider Error" },
-          { value: "toolError", label: "Tool Error" },
+      if (action === "Toggle notifications on/off") {
+        const notifTypeLabel = await ctx.ui.select("Which notification:", [
+          "Agent Finished",
+          "Provider Error",
+          "Tool Error",
         ]);
 
-        if (!notifType) return;
+        if (!notifTypeLabel) return;
+        const notifType = NOTIF_TYPE_LABELS[notifTypeLabel];
 
-        const current = config.notifications[notifType as NotificationType];
+        const current = config.notifications[notifType];
         const newState = !current.enabled;
-        config.notifications[notifType as NotificationType].enabled = newState;
+        config.notifications[notifType].enabled = newState;
         saveConfig(ctx.cwd, config);
-        ctx.ui.notify(`${notifType} notifications ${newState ? "enabled" : "disabled"}`, "info");
+        ctx.ui.notify(`${notifTypeLabel} notifications ${newState ? "enabled" : "disabled"}`, "info");
       }
 
-      if (action === "sound") {
-        const notifType = await ctx.ui.select("Which notification:", [
-          { value: "agentFinished", label: "Agent Finished" },
-          { value: "providerError", label: "Provider Error" },
-          { value: "toolError", label: "Tool Error" },
+      if (action === "Change notification sounds") {
+        const notifTypeLabel = await ctx.ui.select("Which notification:", [
+          "Agent Finished",
+          "Provider Error",
+          "Tool Error",
         ]);
 
-        if (!notifType) return;
+        if (!notifTypeLabel) return;
+        const notifType = NOTIF_TYPE_LABELS[notifTypeLabel];
 
         const soundChoice = await ctx.ui.select(
           "Select sound (plays preview):",
-          AVAILABLE_SOUNDS.map((s) => ({ value: s.value, label: s.label }))
+          AVAILABLE_SOUNDS.map((s) => s.label)
         );
 
         if (!soundChoice) return;
 
-        // Play preview
-        notifyWindows("Preview", "This is how the notification sounds", soundChoice);
+        const soundValue = AVAILABLE_SOUNDS.find((s) => s.label === soundChoice)?.value;
+        if (!soundValue) return;
 
-        config.notifications[notifType as NotificationType].sound = soundChoice;
+        // Play preview
+        notifyWindows("Preview", "This is how the notification sounds", soundValue);
+
+        config.notifications[notifType].sound = soundValue;
         saveConfig(ctx.cwd, config);
-        ctx.ui.notify(`Sound updated for ${notifType}`, "info");
+        ctx.ui.notify(`Sound updated for ${notifTypeLabel}`, "info");
       }
 
-      if (action === "test") {
-        const notifType = await ctx.ui.select("Test which notification:", [
-          { value: "agentFinished", label: "Agent Finished" },
-          { value: "providerError", label: "Provider Error" },
-          { value: "toolError", label: "Tool Error" },
+      if (action === "Test notification") {
+        const notifTypeLabel = await ctx.ui.select("Test which notification:", [
+          "Agent Finished",
+          "Provider Error",
+          "Tool Error",
         ]);
 
-        if (!notifType) return;
+        if (!notifTypeLabel) return;
+        const notifType = NOTIF_TYPE_LABELS[notifTypeLabel];
 
-        const cfg = config.notifications[notifType as NotificationType];
+        const cfg = config.notifications[notifType];
         const titles: Record<string, string> = {
           agentFinished: "Pi",
           providerError: "Pi Error",
