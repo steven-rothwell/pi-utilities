@@ -103,5 +103,33 @@ export default function (pi: ExtensionAPI) {
     config = loadConfig(ctx.cwd);
   });
 
-  // Placeholder for event listeners and command - will be added in subsequent tasks
+  // Agent finished - waiting for user input
+  pi.on("agent_end", async () => {
+    if (!config.notifications.agentFinished.enabled) return;
+    notifyWindows("Pi", "Ready for input", config.notifications.agentFinished.sound);
+  });
+
+  // Provider error - HTTP 4xx/5xx
+  pi.on("after_provider_response", async (event) => {
+    if (!config.notifications.providerError.enabled) return;
+    if (event.status >= 400) {
+      notifyWindows(
+        "Pi Error",
+        `API request failed (HTTP ${event.status})`,
+        config.notifications.providerError.sound
+      );
+    }
+  });
+
+  // Tool error - tool execution failed
+  pi.on("tool_execution_end", async (event) => {
+    if (!config.notifications.toolError.enabled) return;
+    if (event.isError) {
+      notifyWindows(
+        "Pi Tool Error",
+        `Tool '${event.toolName}' failed`,
+        config.notifications.toolError.sound
+      );
+    }
+  });
 }
