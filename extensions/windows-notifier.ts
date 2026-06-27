@@ -95,10 +95,10 @@ function notifyWindows(title: string, body: string, sound: string): void {
     `  $shortcut.Save()`,
     `}`,
     // Show toast with sound
-    `$type = 'Windows.UI.Notifications'`,
-    `$mgr = [ToastNotificationManager, $type, ContentType = WindowsRuntime]`,
-    `$toastXml = [${type}.ToastTemplateType]::ToastText02`,
-    `$xml = [${type}.ToastNotificationManager]::GetTemplateContent($toastXml)`,
+    `$ntfType = 'Windows.UI.Notifications'`,
+    `$mgr = [ToastNotificationManager, $ntfType, ContentType = WindowsRuntime]`,
+    `$toastXml = [$ntfType.ToastTemplateType]::ToastText02`,
+    `$xml = [$ntfType.ToastNotificationManager]::GetTemplateContent($toastXml)`,
     `$xml.GetElementsByTagName('text')[0].AppendChild($xml.CreateTextNode('${escapePs(title)}')) > $null`,
     `$xml.GetElementsByTagName('text')[1].AppendChild($xml.CreateTextNode('${escapePs(body)}')) > $null`,
     ...(sound ? [
@@ -110,8 +110,8 @@ function notifyWindows(title: string, body: string, sound: string): void {
       `$audio.SetAttribute('silent', 'true') > $null`,
       `$xml.DocumentElement.AppendChild($audio) > $null`,
     ]),
-    `$toast = [${type}.ToastNotification]::new($xml)`,
-    `[${type}.ToastNotificationManager]::CreateToastNotifier('${appId}').Show($toast)`,
+    `$toast = [$ntfType.ToastNotification]::new($xml)`,
+    `[ToastNotificationManager]::CreateToastNotifier('${appId}').Show($toast)`,
   ].join("; ");
 
   execFile("powershell.exe", ["-NoProfile", "-Command", psScript], () => {});
