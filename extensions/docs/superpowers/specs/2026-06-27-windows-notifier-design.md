@@ -56,7 +56,7 @@ Location: `~/.pi/agent/extensions/windows-notifier.json`
 Interactive configuration menu with the following options:
 
 1. **Toggle notifications** — Enable/disable each notification type
-2. **Change sound** — Pick from list of available Windows notification sounds
+2. **Change sound** — Pick from list of available Windows notification sounds (each sound plays a preview when selected)
 
 ### Available Sounds
 
