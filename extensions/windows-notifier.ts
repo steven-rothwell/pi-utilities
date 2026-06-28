@@ -111,6 +111,10 @@ function describeSound(value: string): string {
   return value;
 }
 
+function formatTheme(theme: ThemeName): string {
+  return theme.charAt(0).toUpperCase() + theme.slice(1);
+}
+
 // ---------------------------------------------------------------------------
 // Config persistence
 // ---------------------------------------------------------------------------
@@ -194,6 +198,28 @@ const ACCENT_COLORS: Record<string, [number, number, number]> = {
   info: [0, 120, 212],
   error: [216, 59, 1],
   warning: [255, 185, 0],
+};
+
+interface ThemeColors {
+  background: [number, number, number];
+  title: [number, number, number];
+  body: [number, number, number];
+  border: [number, number, number];
+}
+
+const THEME_COLORS: Record<ThemeName, ThemeColors> = {
+  light: {
+    background: [255, 255, 255],
+    title: [30, 30, 30],
+    body: [80, 80, 80],
+    border: [210, 210, 210],
+  },
+  dark: {
+    background: [32, 32, 34],
+    title: [240, 240, 240],
+    body: [170, 170, 170],
+    border: [60, 60, 60],
+  },
 };
 
 /**
@@ -479,6 +505,33 @@ function makeTestPicker(ctx: ThemeContext, close: () => void): Component {
         const level = meta.key === "agentFinished" ? "info" : "error";
         notifyWindows(meta.title, meta.body, config.notifications[meta.key].sound, level);
       }
+    },
+    onClose: close,
+  });
+}
+
+/** Select Dark or Light theme for the notification popup. */
+function makeThemePicker(
+  ctx: ThemeContext,
+  onThemeChanged: () => void,
+  close: () => void,
+): Component {
+  const itemsFactory = () =>
+    (["dark", "light"] as ThemeName[]).map((t) => ({
+      value: t,
+      label: `${config.theme === t ? "(•)" : "( )"} ${formatTheme(t)}`,
+    }));
+
+  return makeListPicker({
+    ...ctx,
+    title: "Select theme",
+    hint: "↑↓ navigate · enter selects · esc back",
+    itemsFactory,
+    initialSelectedValue: config.theme,
+    onPick: (item) => {
+      config.theme = item.value as ThemeName;
+      saveConfig(config);
+      onThemeChanged();
     },
     onClose: close,
   });
