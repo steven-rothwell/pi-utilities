@@ -240,6 +240,11 @@ function notifyWindows(
   playSound(sound);
 
   const [ar, ag, ab] = ACCENT_COLORS[level] ?? ACCENT_COLORS.info;
+  const theme = THEME_COLORS[config.theme] ?? THEME_COLORS.dark;
+  const [bgR, bgG, bgB] = theme.background;
+  const [titleR, titleG, titleB] = theme.title;
+  const [bodyR, bodyG, bodyB] = theme.body;
+  const [borderR, borderG, borderB] = theme.border;
   const safeTitle = escapePs(title);
   const safeBody = escapePs(body);
 
@@ -257,7 +262,7 @@ public class NotifWin32 {
 $f = New-Object System.Windows.Forms.Form
 $f.FormBorderStyle = 'None'; $f.StartPosition = 'Manual'
 $f.Size = New-Object System.Drawing.Size(380, 110)
-$f.BackColor = [System.Drawing.Color]::White
+$f.BackColor = [System.Drawing.Color]::FromArgb(${bgR},${bgG},${bgB})
 $f.TopMost = $true; $f.ShowInTaskbar = $false; $f.Opacity = 0
 $scr = [System.Windows.Forms.Screen]::PrimaryScreen.WorkingArea
 $f.Location = New-Object System.Drawing.Point(($scr.Right - 390), ($scr.Bottom - 120))
@@ -270,15 +275,15 @@ $tl = New-Object System.Windows.Forms.Label
 $tl.Text = '${safeTitle}'; $tl.AutoSize = $false
 $tl.Size = New-Object System.Drawing.Size(355, 26); $tl.Location = New-Object System.Drawing.Point(18, 16)
 $tl.Font = New-Object System.Drawing.Font('Segoe UI Semibold', 11)
-$tl.ForeColor = [System.Drawing.Color]::FromArgb(30, 30, 30)
+$tl.ForeColor = [System.Drawing.Color]::FromArgb(${titleR},${titleG},${titleB})
 $f.Controls.Add($tl)
 $bl = New-Object System.Windows.Forms.Label
 $bl.Text = '${safeBody}'; $bl.AutoSize = $false
 $bl.Size = New-Object System.Drawing.Size(355, 50); $bl.Location = New-Object System.Drawing.Point(18, 46)
 $bl.Font = New-Object System.Drawing.Font('Segoe UI', 10)
-$bl.ForeColor = [System.Drawing.Color]::FromArgb(80, 80, 80)
+$bl.ForeColor = [System.Drawing.Color]::FromArgb(${bodyR},${bodyG},${bodyB})
 $f.Controls.Add($bl)
-$f.Add_Paint({ param($s,$e); $p = New-Object System.Drawing.Pen([System.Drawing.Color]::FromArgb(210,210,210),1); $e.Graphics.DrawRectangle($p,0,0,($f.Width-1),($f.Height-1)); $p.Dispose() })
+$f.Add_Paint({ param($s,$e); $p = New-Object System.Drawing.Pen([System.Drawing.Color]::FromArgb(${borderR},${borderG},${borderB}),1); $e.Graphics.DrawRectangle($p,0,0,($f.Width-1),($f.Height-1)); $p.Dispose() })
 $fi = New-Object System.Windows.Forms.Timer; $fi.Interval = 15
 $fi.Add_Tick({ $f.Opacity = [Math]::Min(1.0, $f.Opacity + 0.12); if($f.Opacity -ge 1.0){$fi.Stop();$fi.Dispose()} })
 $fi.Start()
