@@ -583,6 +583,8 @@ export default function (pi: ExtensionAPI): void {
       await ctx.ui.custom<undefined>((tui, theme, _kb, done) => {
         const themeCtx: ThemeContext = { theme, tui };
 
+        let settingsList: SettingsList;
+
         const rootItems: SettingItem[] = [
           {
             id: "toggle",
@@ -598,6 +600,17 @@ export default function (pi: ExtensionAPI): void {
               makeSoundTypePicker(themeCtx, () => subDone(undefined)),
           },
           {
+            id: "themes",
+            label: "Themes",
+            currentValue: formatTheme(config.theme),
+            submenu: (_cv, subDone) =>
+              makeThemePicker(
+                themeCtx,
+                () => settingsList.updateValue("themes", formatTheme(config.theme)),
+                () => subDone(undefined),
+              ),
+          },
+          {
             id: "test",
             label: "Test notification",
             currentValue: "",
@@ -605,13 +618,15 @@ export default function (pi: ExtensionAPI): void {
           },
         ];
 
-        return makeSettingsSubmenu({
+        const submenu = makeSettingsSubmenu({
           ...themeCtx,
           title: "Notification Settings",
           items: rootItems,
           onChange: () => {},
           onCancel: () => done(undefined),
-        }).component;
+        });
+        settingsList = submenu.settingsList;
+        return submenu.component;
       });
     },
   });
