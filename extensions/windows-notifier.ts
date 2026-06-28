@@ -79,31 +79,34 @@ function saveConfig(config: NotifierConfig): void {
   writeFileSync(configPath, JSON.stringify(config, null, 2), "utf-8");
 }
 
-// Sound values are now direct file paths to Windows system sounds
+// Sound values are direct file paths to Windows system sounds in C:\Windows\Media
+
+function playSound(soundFile: string): void {
+  if (!soundFile) return;
+  const { execFile } = require("child_process");
+  // Convert backslashes to forward slashes — Windows accepts both, and this
+  // avoids backslashes being stripped when the path passes through PowerShell -Command.
+  // Use PlaySync (blocking) so the sound actually plays before PowerShell exits.
+  const safePath = soundFile.replace(/\\/g, "/");
+  const psScript = `(New-Object System.Media.SoundPlayer '${escapePs(safePath)}').PlaySync()`;
+  execFile("powershell.exe", ["-NoProfile", "-Command", psScript], () => {});
+}
 
 function notifyWindows(title: string, body: string, sound: string): void {
   const { execFile } = require("child_process");
 
-  // Map sounds to balloon tip icons (each plays a different native Windows sound)
+  // Map sounds to balloon tip icons (only affects the icon shown, not the sound)
   const soundToIcon: Record<string, string> = {
     "": "None",
-    "C:\\Windows\\Media\\Windows Default.wav": "Info",
-    "C:\\Windows\\Media\\Windows Notify System Generic.wav": "Info",
-    "C:\\Windows\\Media\\Windows Notify Messaging.wav": "Info",
-    "C:\\Windows\\Media\\Windows Notify Email.wav": "Info",
-    "C:\\Windows\\Media\\Windows Notify Calendar.wav": "Info",
-    "C:\\Windows\\Media\\Windows Notify.wav": "Info",
-    "C:\\Windows\\Media\\Windows Ding.wav": "Info",
     "C:\\Windows\\Media\\Windows Exclamation.wav": "Warning",
-    "C:\\Windows\\Media\\Windows Background.wav": "Info",
-    "C:\\Windows\\Media\\Windows Balloon.wav": "Info",
     "C:\\Windows\\Media\\Windows Error.wav": "Error",
-    "C:\\Windows\\Media\\Windows Ringin.wav": "Info",
   };
-
   const tipIcon = soundToIcon[sound] ?? "Info";
 
-  // Show balloon notification with appropriate icon (plays native sound)
+  // Play the configured sound file separately (this is what makes them distinct)
+  playSound(sound);
+
+  // Show balloon notification
   const psScript = [
     "Add-Type -AssemblyName System.Windows.Forms",
     "$balloon = New-Object System.Windows.Forms.NotifyIcon",
