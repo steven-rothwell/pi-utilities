@@ -180,6 +180,60 @@ function escapePs(text: string): string {
   return text.replace(/'/g, "''");
 }
 
+/**
+ * Detect whether the terminal hosting this Pi instance is the foreground
+ * window. If it is, the user is already looking at Pi and a desktop
+ * notification would be redundant.
+ *
+ * Approach: ask User32 for the foreground window's owning process id, then
+ * walk up this process's parent chain (PowerShell → node → shell → terminal).
+ * If the foreground pid appears as an ancestor, Pi's terminal is focused.
+ * This is terminal-host agnostic (works with conhost, Windows Terminal, etc.)
+ * and avoids brittle window-title or process-name matching.
+ *
+ * Resolves `false` on any error or timeout so that notifications still fire
+ * when the focus check cannot run (fail-open).
+ */
+function isPiFocused(): Promise<boolean> {
+  const psScript = `
+Add-Type -TypeDefinition '
+using System; using System.Runtime.InteropServices;
+public class FgWin {
+    [DllImport("User32.dll")] public static extern IntPtr GetForegroundWindow();
+    [DllImport("User32.dll")] public static extern uint GetWindowThreadProcessId(IntPtr hWnd, out uint lpdwProcessId);
+}'
+$fgHwnd = [FgWin]::GetForegroundWindow()
+$fgPid = [uint32]0
+[void][FgWin]::GetWindowThreadProcessId($fgHwnd, [ref]$fgPid)
+if ($fgPid -eq 0) { Write-Output 'false'; exit }
+$map = @{}
+Get-CimInstance Win32_Process -ErrorAction SilentlyContinue | ForEach-Object {
+    $map[[int]$_.ProcessId] = [int]$_.ParentProcessId
+}
+$cur = $PID
+$found = 'false'
+while ($map.ContainsKey($cur)) {
+    if ($cur -eq [int]$fgPid) { $found = 'true'; break }
+    $cur = $map[$cur]
+}
+Write-Output $found
+`.trim();
+  return new Promise((resolve) => {
+    execFile(
+      "powershell.exe",
+      ["-NoProfile", "-Command", psScript],
+      { timeout: 8000 },
+      (err, stdout) => {
+        if (err) {
+          resolve(false);
+          return;
+        }
+        resolve(stdout.trim() === "true");
+      },
+    );
+  });
+}
+
 /** Play a .wav once via PowerShell (fire-and-forget). */
 function playSound(soundFile: string): void {
   if (!soundFile) return;
@@ -555,6 +609,7 @@ export default function (pi: ExtensionAPI): void {
   pi.on("agent_end", async () => {
     const cfg = config.notifications.agentFinished;
     if (!cfg.enabled) return;
+    if (await isPiFocused()) return;
     notifyWindows("Pi", "Ready for input", cfg.sound, "info");
   });
 
@@ -562,6 +617,7 @@ export default function (pi: ExtensionAPI): void {
   pi.on("after_provider_response", async (event) => {
     const cfg = config.notifications.providerError;
     if (!cfg.enabled || event.status < 400) return;
+    if (await isPiFocused()) return;
     notifyWindows("Pi Error", `API request failed (HTTP ${event.status})`, cfg.sound, "error");
   });
 
@@ -569,6 +625,7 @@ export default function (pi: ExtensionAPI): void {
   pi.on("tool_execution_end", async (event) => {
     const cfg = config.notifications.toolError;
     if (!cfg.enabled || !event.isError) return;
+    if (await isPiFocused()) return;
     notifyWindows("Pi Tool Error", `Tool '${event.toolName}' failed`, cfg.sound, "error");
   });
 
