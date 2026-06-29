@@ -1,0 +1,26 @@
+{
+  "name": "@steven-rothwell/pi-notifier",
+  "version": "1.0.0",
+  "description": "Notifications for Pi coding agent",
+  "keywords": [
+    "pi-package",
+    "notifications",
+    "windows",
+    "desktop"
+  ],
+  "author": "steven-rothwell",
+  "license": "MIT",
+  "pi": {
+    "extensions": ["./notifier.ts"]
+  },
+  "peerDependencies": {
+    "@earendil-works/pi-coding-agent": "*",
+    "@earendil-works/pi-tui": "*",
+    "typebox": "*"
+  },
+  "devDependencies": {
+    "@earendil-works/pi-coding-agent": "latest",
+    "@earendil-works/pi-tui": "latest",
+    "typebox": "latest"
+  }
+}
