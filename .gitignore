@@ -1,4 +1,5 @@
 
-# Generated design docs and implementation plans
-extensions/docs/superpowers/plans/
-extensions/docs/superpowers/specs/
+# Superpowers folders
+.superpowers/
+extensions/.superpowers/
+extensions/docs/superpowers/
