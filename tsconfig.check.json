@@ -1,0 +1,4 @@
+{
+  "extends": "C:/Users/scuba/AppData/Local/nvm/v24.14.0/node_modules/@earendil-works/pi-coding-agent/tsconfig.json",
+  "include": ["extensions/notifier.ts"]
+}
