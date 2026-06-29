@@ -1,4 +1,6 @@
 
+tsconfig.check.json
+
 # Superpowers folders
 .superpowers/
 extensions/.superpowers/
