@@ -1,4 +1,4 @@
-// ~/.pi/agent/extensions/windows-notifier.ts
+// extensions/pi-notifier/notifier.ts
 //
 // Windows desktop notifications for Pi.
 //
@@ -42,7 +42,7 @@ interface NotifierConfig {
   notifications: Record<NotificationType, NotificationConfig>;
 }
 
-const CONFIG_FILE = "windows-notifier.json";
+const CONFIG_FILE = "notifier.json";
 
 const DEFAULT_CONFIG: NotifierConfig = {
   theme: "dark",
