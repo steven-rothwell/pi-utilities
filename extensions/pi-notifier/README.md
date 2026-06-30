@@ -37,7 +37,7 @@ Run the `/notifier` command in Pi's TUI to:
 
 ## Configuration File
 
-Settings are stored in `~/.pi/windows-notifier.json`. You can edit this file directly:
+Settings are stored in `~/.pi/notifier.json`. You can edit this file directly:
 
 ```json
 {
