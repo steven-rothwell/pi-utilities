@@ -11,6 +11,13 @@ Windows desktop notifications for Pi. Get notified when the agent finishes, when
 - **Custom Sounds** - Choose from 13 Windows system sounds or disable sounds per notification type
 - **Dark/Light Theme** - Stylish toast popups with a modern look
 
+## Screenshots
+
+| | Agent Finished | Provider Error | Tool Error |
+|---|---|---|---|
+| **Dark** | ![Dark Agent Finished](./screenshots/dark-agent-finished.png) | ![Dark Provider Error](./screenshots/dark-provider-error.png) | ![Dark Tool Error](./screenshots/dark-tool-error.png) |
+| **Light** | ![Light Agent Finished](./screenshots/light-agent-finished.png) | ![Light Provider Error](./screenshots/light-provider-error.png) | ![Light Tool Error](./screenshots/light-tool-error.png) |
+
 ## Install
 
 ```bash
