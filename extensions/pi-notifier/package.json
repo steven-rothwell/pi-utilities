@@ -1,6 +1,6 @@
 {
   "name": "@steven-rothwell/pi-notifier",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Notifications for Pi coding agent",
   "keywords": [
     "pi-package",
@@ -11,8 +11,7 @@
   "author": "steven-rothwell",
   "license": "MIT",
   "pi": {
-    "extensions": ["./notifier.ts"],
-    "image": "https://raw.githubusercontent.com/steven-rothwell/pi-utilities/main/extensions/pi-notifier/screenshots/dark-agent-finished.png"
+    "extensions": ["./notifier.ts"]
   },
   "peerDependencies": {
     "@earendil-works/pi-coding-agent": "*",
