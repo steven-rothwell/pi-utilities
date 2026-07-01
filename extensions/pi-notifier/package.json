@@ -11,8 +11,7 @@
   "author": "steven-rothwell",
   "license": "MIT",
   "pi": {
-    "extensions": ["./notifier.ts"],
-    "image": "https://raw.githubusercontent.com/steven-rothwell/pi-utilities/main/extensions/pi-notifier/screenshots/dark-agent-finished.png"
+    "extensions": ["./notifier.ts"]
   },
   "peerDependencies": {
     "@earendil-works/pi-coding-agent": "*",
