@@ -15,8 +15,8 @@ Windows desktop notifications for Pi. Get notified when the agent finishes, when
 
 | | Agent Finished | Provider Error | Tool Error |
 |---|---|---|---|
-| **Dark** | ![Dark Agent Finished](./screenshots/dark-agent-finished.png) | ![Dark Provider Error](./screenshots/dark-provider-error.png) | ![Dark Tool Error](./screenshots/dark-tool-error.png) |
-| **Light** | ![Light Agent Finished](./screenshots/light-agent-finished.png) | ![Light Provider Error](./screenshots/light-provider-error.png) | ![Light Tool Error](./screenshots/light-tool-error.png) |
+| **Dark** | ![Dark Agent Finished](https://raw.githubusercontent.com/steven-rothwell/pi-utilities/master/extensions/pi-notifier/screenshots/dark-agent-finished.png) | ![Dark Provider Error](https://raw.githubusercontent.com/steven-rothwell/pi-utilities/master/extensions/pi-notifier/screenshots/dark-provider-error.png) | ![Dark Tool Error](https://raw.githubusercontent.com/steven-rothwell/pi-utilities/master/extensions/pi-notifier/screenshots/dark-tool-error.png) |
+| **Light** | ![Light Agent Finished](https://raw.githubusercontent.com/steven-rothwell/pi-utilities/master/extensions/pi-notifier/screenshots/light-agent-finished.png) | ![Light Provider Error](https://raw.githubusercontent.com/steven-rothwell/pi-utilities/master/extensions/pi-notifier/screenshots/light-provider-error.png) | ![Light Tool Error](https://raw.githubusercontent.com/steven-rothwell/pi-utilities/master/extensions/pi-notifier/screenshots/light-tool-error.png) |
 
 ## Install
 
