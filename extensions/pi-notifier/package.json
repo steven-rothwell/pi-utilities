@@ -1,6 +1,6 @@
 {
   "name": "@steven-rothwell/pi-notifier",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "Notifications for Pi coding agent",
   "keywords": [
     "pi-package",
@@ -9,6 +9,10 @@
     "desktop"
   ],
   "author": "steven-rothwell",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/steven-rothwell/pi-utilities"
+  },
   "license": "MIT",
   "pi": {
     "extensions": ["./notifier.ts"]
